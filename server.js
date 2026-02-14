@@ -29,16 +29,22 @@ app.use(express.json());
 
 // CORS configuration
 app.use(cors({
-  origin: function(origin, callback){
-    // Allow requests with no origin (like Postman)
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){
-      const msg = "The CORS policy for this site does not allow access from the specified Origin.";
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman or server-to-server)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    // block other origins
+    callback(new Error("Not allowed by CORS"), false);
   },
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200 // for legacy browsers
+}));
+
+// Handle preflight requests for all routes
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 // Routes
