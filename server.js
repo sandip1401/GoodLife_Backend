@@ -18,6 +18,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "https://goodlife.vercel.app/",
+    "https://admin-good-life.vercel.app/"
   ],
   credentials: true
 }));
