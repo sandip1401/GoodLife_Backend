@@ -15,7 +15,13 @@ const port = process.env.PORT || 4000;
 
 //middlewares
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://goodlife.vercel.app/",
+  ],
+  credentials: true
+}));
+
 
 app.use('/api/admin',adminRouter)
 app.use('/api/user',userRouter)
