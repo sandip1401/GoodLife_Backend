@@ -20,8 +20,8 @@ connectCloudinary();
 
 // Allowed frontends
 const allowedOrigins = [
-  "https://goodlife.vercel.app/",
-  "https://admin-good-life.vercel.app/"
+  "https://goodlife.vercel.app",
+  "https://admin-good-life.vercel.app"
 ];
 
 // Middlewares
