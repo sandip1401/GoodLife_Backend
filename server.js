@@ -17,9 +17,9 @@ const port = process.env.PORT || 4000;
 app.use(express.json());
 app.use(cors());
 
-app.use('/api/admin',adminRouter)
-app.use('/api/user',userRouter)
-app.use('/api/doctor',doctorRouter)
+app.use("/api/admin", adminRouter);
+app.use("/api/user", userRouter);
+app.use("/api/doctor", doctorRouter);
 
 app.get("/", (req, res) => {
   res.send("API WORKING");

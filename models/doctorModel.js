@@ -1,9 +1,28 @@
 import mongoose from "mongoose";
 
 const weeklyAvailabilitySchema = new mongoose.Schema({
-  day: { type: String, required: true },          // Monday
-  startTime: { type: String, required: true },    // 11:00
-  endTime: { type: String, required: true }       // 13:00
+  day: { type: String, required: true },          
+  startTime: { type: String, required: true },    
+  endTime: { type: String, required: true },
+
+  recurrenceType: {
+    type: String,
+    enum: ["weekly", "monthly", "interval"],
+    default: "weekly"
+  },
+
+  weekPositions: {
+    type: [String], // ["first", "third", "last"]
+    default: []
+  },
+
+  interval: {
+    type: Number, // every X days
+  },
+
+  startDate: {
+    type: String // for interval type
+  }
 });
 
 const doctorSchema = new mongoose.Schema(
@@ -14,10 +33,11 @@ const doctorSchema = new mongoose.Schema(
     image: { type: String, required: true },
     speciality: { type: String, required: true },
     degree: { type: String, required: true },
+    city: { type: String, required: true },
     experience: { type: String, required: true },
     about: { type: String, required: true },
     available: { type: Boolean, default: true },
-    fees: { type: Number, required: true },
+    fees: { type: String, required: true },
     address1: { type: String, required: true },
     address2: { type: String, required: true },
     date: { type: Number, required: true },

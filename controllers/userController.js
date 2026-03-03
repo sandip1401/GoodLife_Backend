@@ -7,19 +7,68 @@ import appointmentModel from "../models/appointmentModel.js";
 import razorpay from "../config/razorpay.js";
 import crypto from "crypto";
 
+
+const dayIndexMap = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6
+};
+
+const generateDoctorSlots = (doctor, year, month) => {
+  const slots = [];
+
+  doctor.weeklyAvailability.forEach(item => {
+
+    const dayOfWeek = dayIndexMap[item.day];
+
+    if (item.recurrenceType === "monthly") {
+      const dates = getMonthlyWeekdayDates(
+        year,
+        month,
+        dayOfWeek,
+        item.weekNumbers
+      );
+
+      dates.forEach(date => {
+        slots.push({
+          date,
+          startTime: item.startTime,
+          endTime: item.endTime
+        });
+      });
+    }
+
+    if (item.recurrenceType === "weekly") {
+      // you can add weekly logic here later
+    }
+
+    if (item.recurrenceType === "interval") {
+      // interval logic later
+    }
+  });
+
+  return slots;
+};
+
+
+
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, phone, address, gender, age } = req.body;
+    const { name, email, password, phone, gender, age } = req.body;
 
     // 🔹 Validation
-    if (!name || !email || !password || !phone || !gender || !age) {
+    if (!name || !password || !phone || !gender || !age) {
       return res.json({
         success: false,
         message: "All required fields must be filled",
       });
     }
 
-    if (!validator.isEmail(email)) {
+    if (email && !validator.isEmail(email)) {
       return res.json({ success: false, message: "Invalid email" });
     }
 
@@ -30,7 +79,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await userModel.findOne({ email });
+    const existingUser = await userModel.findOne({ phone });
     if (existingUser) {
       return res.json({
         success: false,
@@ -38,15 +87,24 @@ const registerUser = async (req, res) => {
       });
     }
 
+    if (email) {
+  const emailExists = await userModel.findOne({ email });
+  if (emailExists) {
+    return res.json({
+      success: false,
+      message: "Email already registered",
+    });
+  }
+}
+
+
     // 🔹 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await userModel.create({
       name,
-      email,
       password: hashedPassword,
       phone,
-      address,
       gender,
       age,
     });
@@ -69,8 +127,8 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await userModel.findOne({ email });
+    const { phone, password } = req.body;
+    const user = await userModel.findOne({ phone });
 
     if (!user) {
       return res.json({ success: false, message: "User does not exist" });
@@ -195,6 +253,42 @@ const bookAppointment = async (req, res) => {
     });
   }
 };
+
+
+const getDoctorAvailableSlots = async (req, res) => {
+  try {
+    const { doctorId, year, month } = req.query;
+
+    const doctor = await doctorModel.findById(doctorId);
+
+    if (!doctor) {
+      return res.json({
+        success: false,
+        message: "Doctor not found"
+      });
+    }
+
+    const slots = generateDoctorSlots(
+      doctor,
+      Number(year),
+      Number(month)
+    );
+
+    res.json({
+      success: true,
+      slots
+    });
+
+  } catch (error) {
+    res.json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
+
 
 const myAppointments = async (req, res) => {
   try {
@@ -373,5 +467,6 @@ export {
   cancelAppointment,
   createPaymentorder,
   verifyPayment,
-  getUserProfile
+  getUserProfile,
+  getDoctorAvailableSlots
 };
