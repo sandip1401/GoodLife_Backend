@@ -58,7 +58,7 @@ const generateDoctorSlots = (doctor, year, month) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, phone, gender, age } = req.body;
+    const { name, password, phone, gender, age } = req.body;
 
     // 🔹 Validation
     if (!name || !password || !phone || !gender || !age) {
@@ -68,9 +68,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (email && !validator.isEmail(email)) {
-      return res.json({ success: false, message: "Invalid email" });
-    }
+
 
     if (password.length < 8) {
       return res.json({
@@ -87,15 +85,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    if (email) {
-  const emailExists = await userModel.findOne({ email });
-  if (emailExists) {
-    return res.json({
-      success: false,
-      message: "Email already registered",
-    });
-  }
-}
+
 
 
     // 🔹 Hash password
