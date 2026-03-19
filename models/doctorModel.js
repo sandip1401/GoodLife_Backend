@@ -36,6 +36,7 @@ const doctorSchema = new mongoose.Schema(
     city: { type: String, required: true },
     experience: { type: String, required: true },
     about: { type: String, required: true },
+    achievement: { type: String, required: true },
     available: { type: Boolean, default: true },
     fees: { type: String, required: true },
     address1: { type: String, required: true },

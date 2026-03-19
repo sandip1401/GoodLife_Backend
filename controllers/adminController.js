@@ -9,14 +9,14 @@ import userModel from "../models/userModel.js"
 
 const addDoctor=async(req,res)=>{
     try{
-        let {name,email,password,speciality,degree,city, experience,about,fees,address1,address2,weeklyAvailability,managerContacts}=req.body
+        let {name,email,password,speciality,degree,city, experience,about,achievement,fees,address1,address2,weeklyAvailability,managerContacts}=req.body
         const imageFile=req.file
 
         if (weeklyAvailability) {
             weeklyAvailability = JSON.parse(weeklyAvailability);
         }
 
-        if(!name||!email||!password||!speciality||!degree||!experience||!about||!city||!fees||!weeklyAvailability||!managerContacts){
+        if(!name||!email||!password||!speciality||!degree||!experience||!about||!achievement||!city||!fees||!weeklyAvailability||!managerContacts){
             return res.json({success:false,message:"Missing Details"})
         }
         //vaildating email format
@@ -47,6 +47,7 @@ const addDoctor=async(req,res)=>{
             degree,
             experience,
             about,
+            achievement,
             fees,
             city,
             address1:address1,

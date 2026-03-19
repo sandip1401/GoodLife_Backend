@@ -6,7 +6,7 @@ import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
 import razorpay from "../config/razorpay.js";
 import crypto from "crypto";
-
+import donorModel from "../models/donor.js";
 
 const dayIndexMap = {
   Sunday: 0,
@@ -15,14 +15,13 @@ const dayIndexMap = {
   Wednesday: 3,
   Thursday: 4,
   Friday: 5,
-  Saturday: 6
+  Saturday: 6,
 };
 
 const generateDoctorSlots = (doctor, year, month) => {
   const slots = [];
 
-  doctor.weeklyAvailability.forEach(item => {
-
+  doctor.weeklyAvailability.forEach((item) => {
     const dayOfWeek = dayIndexMap[item.day];
 
     if (item.recurrenceType === "monthly") {
@@ -30,14 +29,14 @@ const generateDoctorSlots = (doctor, year, month) => {
         year,
         month,
         dayOfWeek,
-        item.weekNumbers
+        item.weekNumbers,
       );
 
-      dates.forEach(date => {
+      dates.forEach((date) => {
         slots.push({
           date,
           startTime: item.startTime,
-          endTime: item.endTime
+          endTime: item.endTime,
         });
       });
     }
@@ -54,8 +53,6 @@ const generateDoctorSlots = (doctor, year, month) => {
   return slots;
 };
 
-
-
 const registerUser = async (req, res) => {
   try {
     const { name, password, phone, gender, age } = req.body;
@@ -67,8 +64,6 @@ const registerUser = async (req, res) => {
         message: "All required fields must be filled",
       });
     }
-
-
 
     if (password.length < 8) {
       return res.json({
@@ -85,9 +80,6 @@ const registerUser = async (req, res) => {
       });
     }
 
-
-
-
     // 🔹 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -99,11 +91,9 @@ const registerUser = async (req, res) => {
       age,
     });
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       success: true,
@@ -154,7 +144,6 @@ const getUserProfile = async (req, res) => {
       success: true,
       user,
     });
-
   } catch (error) {
     console.log(error);
     res.json({
@@ -163,8 +152,6 @@ const getUserProfile = async (req, res) => {
     });
   }
 };
-
-
 
 const bookAppointment = async (req, res) => {
   try {
@@ -244,7 +231,6 @@ const bookAppointment = async (req, res) => {
   }
 };
 
-
 const getDoctorAvailableSlots = async (req, res) => {
   try {
     const { doctorId, year, month } = req.query;
@@ -254,31 +240,48 @@ const getDoctorAvailableSlots = async (req, res) => {
     if (!doctor) {
       return res.json({
         success: false,
-        message: "Doctor not found"
+        message: "Doctor not found",
       });
     }
 
-    const slots = generateDoctorSlots(
-      doctor,
-      Number(year),
-      Number(month)
-    );
+    const slots = generateDoctorSlots(doctor, Number(year), Number(month));
 
     res.json({
       success: true,
-      slots
+      slots,
     });
-
   } catch (error) {
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
 
+const updateDonorAvailability = async (req, res) => {
+  try {
 
+    const { donorId, available } = req.body;
+
+    await donorModel.findByIdAndUpdate(donorId, {
+      available: available
+    });
+
+    res.json({
+      success: true,
+      message: "Availability updated"
+    });
+
+  } catch (error) {
+
+    res.json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};
 
 const myAppointments = async (req, res) => {
   try {
@@ -405,8 +408,95 @@ const createPaymentorder = async (req, res) => {
   }
 };
 
-//verify order
+const reportDonor = async (req, res) => {
+  try {
+    const { donorId, message } = req.body;
+    const userId = req.userId;
 
+    if (!donorId || !message) {
+      return res.json({
+        success: false,
+        message: "Donor ID and message required",
+      });
+    }
+
+    const donor = await donorModel.findById(donorId);
+
+    if (!donor) {
+      return res.json({
+        success: false,
+        message: "Donor not found",
+      });
+    }
+
+    donor.reports.push({
+      userId,
+      message,
+    });
+
+    await donor.save();
+
+    res.json({
+      success: true,
+      message: "Report submitted successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const addDonor = async (req, res) => {
+  try {
+    const { name, bloodGroup, location, phone, email } = req.body;
+
+    const donor = new donorModel({
+      userId: req.userId,
+      name,
+      bloodGroup,
+      location,
+      phone,
+      email,
+    });
+
+    await donor.save();
+
+    res.json({
+      success: true,
+      message: "Donor added successfully",
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const listDonors = async (req,res)=>{
+
+try{
+
+const donors = await donorModel.find()
+
+res.json({
+success:true,
+donors
+})
+
+}catch(error){
+res.json({
+success:false,
+message:error.message
+})
+}
+
+}
+
+//verify order
 const verifyPayment = async (req, res) => {
   try {
     const {
@@ -458,5 +548,9 @@ export {
   createPaymentorder,
   verifyPayment,
   getUserProfile,
-  getDoctorAvailableSlots
+  getDoctorAvailableSlots,
+  reportDonor,
+  addDonor,
+  listDonors,
+  updateDonorAvailability
 };
