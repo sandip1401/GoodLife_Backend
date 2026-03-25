@@ -116,7 +116,9 @@ const loginUser = async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+        expiresIn: "7d",
+      });
       res.json({ success: true, token });
     } else {
       res.json({ success: false, message: "Invalid credentials" });
@@ -258,28 +260,23 @@ const getDoctorAvailableSlots = async (req, res) => {
   }
 };
 
-
 const updateDonorAvailability = async (req, res) => {
   try {
-
     const { donorId, available } = req.body;
 
     await donorModel.findByIdAndUpdate(donorId, {
-      available: available
+      available: available,
     });
 
     res.json({
       success: true,
-      message: "Availability updated"
+      message: "Availability updated",
     });
-
   } catch (error) {
-
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
-
   }
 };
 
@@ -476,25 +473,22 @@ const addDonor = async (req, res) => {
   }
 };
 
-const listDonors = async (req,res)=>{
+const listDonors = async (req, res) => {
+  try {
+    console.log("Donor API called");
+    const donors = await donorModel.find();
 
-try{
-
-const donors = await donorModel.find()
-
-res.json({
-success:true,
-donors
-})
-
-}catch(error){
-res.json({
-success:false,
-message:error.message
-})
-}
-
-}
+    res.json({
+      success: true,
+      donors,
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 //verify order
 const verifyPayment = async (req, res) => {
@@ -552,5 +546,5 @@ export {
   reportDonor,
   addDonor,
   listDonors,
-  updateDonorAvailability
+  updateDonorAvailability,
 };

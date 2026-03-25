@@ -43,6 +43,7 @@ const doctorSchema = new mongoose.Schema(
     address2: { type: String, required: true },
     date: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
+    clinicId: { type: mongoose.Schema.Types.ObjectId, ref: "clinic" },
     managerContacts: [
     {
       type: String,
