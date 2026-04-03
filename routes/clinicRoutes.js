@@ -6,6 +6,8 @@ import {
   getDoctorsByClinic,
   createClinic
 } from "../controllers/clinicController.js";
+import { cacheMiddleware } from '../middlewares/authUser.js'
+
 
 const clinicRouter = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -14,12 +16,12 @@ const upload = multer({ dest: "uploads/" });
 clinicRouter.post("/add", upload.single("image"), createClinic);
 
 // admin search clinic
-clinicRouter.get("/search", searchClinic);
+clinicRouter.get("/search",cacheMiddleware, searchClinic);
 
 // show all clinics
-clinicRouter.get("/list", getAllClinics);
+clinicRouter.get("/list",cacheMiddleware, getAllClinics);
 
 // doctors of a clinic
-clinicRouter.get("/doctors-by-clinic/:clinicId", getDoctorsByClinic);
+clinicRouter.get("/doctors-by-clinic/:clinicId",cacheMiddleware, getDoctorsByClinic);
 
 export default clinicRouter;

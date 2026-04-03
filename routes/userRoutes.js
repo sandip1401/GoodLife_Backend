@@ -1,6 +1,6 @@
 import express, { Router } from 'express'
 import { bookAppointment, cancelAppointment, createPaymentorder, getUserProfile, loginUser, myAppointments, registerUser, verifyPayment,reportDonor, addDonor, listDonors, updateDonorAvailability } from '../controllers/userController.js'
-import authUser from '../middlewares/authUser.js'
+import {authUser} from '../middlewares/authUser.js'
 
 
 const userRouter=express.Router()

@@ -87,24 +87,33 @@ const searchClinic = async (req, res) => {
 // GET ALL CLINICS (for patient button "Show Clinics")
 const getAllClinics = async (req, res) => {
   try {
-    const clinics = await clinicModel.find({}).sort({ name: 1 });
-
-    const clinicsWithDoctorCount = await Promise.all(
-      clinics.map(async (clinic) => {
-        const doctorCount = await doctorModel.countDocuments({
-          clinicId: clinic._id
-        });
-
-        return {
-          ...clinic._doc,
-          doctorCount
-        };
-      })
-    );
+    const clinics = await clinicModel.aggregate([
+      {
+        $lookup: {
+          from: "doctors",
+          localField: "_id",
+          foreignField: "clinicId",
+          as: "doctorList"
+        }
+      },
+      {
+        $addFields: {
+          doctorCount: { $size: "$doctorList" }
+        }
+      },
+      {
+        $project: {
+          doctorList: 0
+        }
+      },
+      {
+        $sort: { name: 1 }
+      }
+    ]);
 
     res.json({
       success: true,
-      clinics: clinicsWithDoctorCount
+      clinics
     });
   } catch (error) {
     console.log(error);

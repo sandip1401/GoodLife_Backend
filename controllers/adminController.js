@@ -91,7 +91,10 @@ const addDoctor = async (req, res) => {
       resource_type: "image",
     });
 
-    const imageUrl = imageUpload.secure_url;
+    const imageUrl = imageUpload.secure_url.replace(
+  "/upload/",
+  "/upload/f_auto,q_auto/"
+);
 
         // ===== CLINIC CHECK START =====
     let clinicName = address1.trim();

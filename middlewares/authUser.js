@@ -31,4 +31,10 @@ const authUser = async (req, res, next) => {
   }
 };
 
-export default authUser;
+
+const cacheMiddleware = (req, res, next) => {
+  res.set("Cache-Control", "public, max-age=400");
+  next();
+};
+
+export {authUser,cacheMiddleware};
