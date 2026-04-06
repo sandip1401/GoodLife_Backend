@@ -7,6 +7,7 @@ import adminRouter from "./routes/adminRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import doctorRouter from "./routes/doctorRoutes.js";
 import clinicRouter from "./routes/clinicRoutes.js";
+import helmet from "helmet";
 
 const app = express();
 dotenv.config();
@@ -17,6 +18,39 @@ const port = process.env.PORT || 4000;
 //middlewares
 app.use(express.json());
 app.use(cors());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://fonts.googleapis.com"
+        ],
+
+        fontSrc: [
+          "'self'",
+          "https://fonts.gstatic.com"
+        ],
+
+        connectSrc: [
+          "'self'",
+          "https://goodlife-backend-xb3b.onrender.com",
+          "https://www.google-analytics.com",
+          "https://analytics.google.com"
+        ],
+
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://www.googletagmanager.com"
+        ],
+      },
+    },
+  })
+);
 
 
 app.use("/api/admin", adminRouter);
