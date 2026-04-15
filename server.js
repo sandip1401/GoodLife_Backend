@@ -24,34 +24,26 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
 
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fonts.googleapis.com"
-        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
 
-        fontSrc: [
-          "'self'",
-          "https://fonts.gstatic.com"
-        ],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
 
         connectSrc: [
           "'self'",
           "https://goodlife-backend-xb3b.onrender.com",
           "https://www.google-analytics.com",
-          "https://analytics.google.com"
+          "https://analytics.google.com",
         ],
 
         scriptSrc: [
           "'self'",
           "'unsafe-inline'",
-          "https://www.googletagmanager.com"
+          "https://www.googletagmanager.com",
         ],
       },
     },
-  })
+  }),
 );
-
 
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
