@@ -8,6 +8,35 @@ import appointmentModel from "../models/appointmentModel.js";
 import userModel from "../models/userModel.js";
 import clinicModel from "../models/clinicModel.js";
 
+const parseManagerContacts = (contacts) => {
+  if (Array.isArray(contacts)) {
+    return contacts.map(String).filter(Boolean);
+  }
+
+  if (!contacts) {
+    return [];
+  }
+
+  if (typeof contacts === "string") {
+    try {
+      const parsed = JSON.parse(contacts);
+      if (Array.isArray(parsed)) {
+        return parsed.map(String).filter(Boolean);
+      }
+    } catch (err) {
+      // fall through to manual cleanup
+    }
+
+    return contacts
+      .replace(/^[\[\]\s"]+|[\[\]\s"]+$/g, "")
+      .split(",")
+      .map((item) => item.trim().replace(/^"|"$/g, ""))
+      .filter(Boolean);
+  }
+
+  return [String(contacts)];
+};
+
 const addDoctor = async (req, res) => {
   try {
     let {
@@ -76,11 +105,7 @@ const addDoctor = async (req, res) => {
       });
     }
 
-    // parse manager contacts
-    let parsedManagers = managerContacts;
-    if (typeof managerContacts === "string") {
-      parsedManagers = JSON.parse(managerContacts);
-    }
+    const parsedManagers = parseManagerContacts(managerContacts);
 
     // hash password
     const salt = await bcrypt.genSalt(10);
@@ -92,11 +117,11 @@ const addDoctor = async (req, res) => {
     });
 
     const imageUrl = imageUpload.secure_url.replace(
-  "/upload/",
-  "/upload/f_auto,q_auto/"
-);
+      "/upload/",
+      "/upload/f_auto,q_auto/",
+    );
 
-        // ===== CLINIC CHECK START =====
+    // ===== CLINIC CHECK START =====
     let clinicName = address1.trim();
 
     let clinic = await clinicModel.findOne({
@@ -146,7 +171,6 @@ const addDoctor = async (req, res) => {
   }
 };
 
-
 const updateDoctor = async (req, res) => {
   try {
     const {
@@ -162,6 +186,8 @@ const updateDoctor = async (req, res) => {
       available,
     } = req.body;
 
+    const parsedManagers = parseManagerContacts(managerContacts);
+
     await doctorModel.findByIdAndUpdate(doctorId, {
       email,
       city,
@@ -170,7 +196,7 @@ const updateDoctor = async (req, res) => {
       about,
       achievement,
       address1,
-      managerContacts,
+      managerContacts: parsedManagers,
       available,
     });
 
@@ -180,14 +206,13 @@ const updateDoctor = async (req, res) => {
   }
 };
 
-
 const completeAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.body;
 
     await appointmentModel.findByIdAndUpdate(appointmentId, {
       isCompleted: true,
-      cancelled: false
+      cancelled: false,
     });
 
     res.json({
@@ -276,10 +301,9 @@ const AdmincancelAppointment = async (req, res) => {
     }
 
     if (doctor.slots_booked?.[appointment.slotDate]) {
-      doctor.slots_booked[appointment.slotDate] =
-        doctor.slots_booked[appointment.slotDate].filter(
-          (t) => t !== appointment.slotTime
-        );
+      doctor.slots_booked[appointment.slotDate] = doctor.slots_booked[
+        appointment.slotDate
+      ].filter((t) => t !== appointment.slotTime);
 
       if (doctor.slots_booked[appointment.slotDate].length === 0) {
         delete doctor.slots_booked[appointment.slotDate];
@@ -313,7 +337,7 @@ const adminDashboard = async (req, res) => {
       doctors: doctor.length,
       appointments: appointments.length,
       patients: users.length,
-      clinics: clinics.length, 
+      clinics: clinics.length,
     };
     res.json({ success: true, dashData });
   } catch (error) {
@@ -344,5 +368,5 @@ export {
   adminDashboard,
   getAllPatients,
   completeAppointment,
-  updateDoctor
+  updateDoctor,
 };
