@@ -175,6 +175,8 @@ const updateDoctor = async (req, res) => {
   try {
     const {
       doctorId,
+      clinicId,
+      name,
       email,
       city,
       fees,
@@ -182,13 +184,25 @@ const updateDoctor = async (req, res) => {
       about,
       achievement,
       address1,
+      address2,
+      speciality,
+      degree,
+      education,
+      weeklyAvailability,
       managerContacts,
       available,
     } = req.body;
 
-    const parsedManagers = parseManagerContacts(managerContacts);
+    if (!doctorId) {
+      return res.json({ success: false, message: "Doctor ID is required" });
+    }
 
-    await doctorModel.findByIdAndUpdate(doctorId, {
+    // fetch existing doctor to detect clinic change
+    const existingDoctor = await doctorModel.findById(doctorId).select("clinicId");
+    const previousClinicId = existingDoctor?.clinicId ? String(existingDoctor.clinicId) : null;
+
+    const updateData = {
+      name,
       email,
       city,
       fees,
@@ -196,11 +210,73 @@ const updateDoctor = async (req, res) => {
       about,
       achievement,
       address1,
-      managerContacts: parsedManagers,
+      address2,
+      speciality,
+      degree,
+      education,
       available,
-    });
+      managerContacts: parseManagerContacts(managerContacts),
+    };
 
-    res.json({ success: true, message: "Doctor Updated" });
+    if (weeklyAvailability) {
+      try {
+        updateData.weeklyAvailability = JSON.parse(weeklyAvailability);
+      } catch (err) {
+        updateData.weeklyAvailability = weeklyAvailability;
+      }
+    }
+
+    if (req.body.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(req.body.password, salt);
+    }
+
+    if (req.file) {
+      const imageUpload = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "image",
+      });
+      updateData.image = imageUpload.secure_url.replace(
+        "/upload/",
+        "/upload/f_auto,q_auto/",
+      );
+    }
+
+    if (clinicId) {
+      const clinic = await clinicModel.findById(clinicId);
+      if (clinic) {
+        updateData.clinicId = clinic._id;
+        updateData.address1 = clinic.name;
+        if (!address2) updateData.address2 = clinic.address || address2;
+      }
+    } else if (address1) {
+      const clinicName = address1.trim();
+      let clinic = await clinicModel.findOne({
+        name: { $regex: new RegExp("^" + clinicName + "$", "i") },
+      });
+
+      if (!clinic) {
+        clinic = new clinicModel({
+          name: clinicName,
+          city,
+          address: address2,
+        });
+        await clinic.save();
+      }
+
+      updateData.clinicId = clinic._id;
+    }
+
+    const updatedDoctor = await doctorModel.findByIdAndUpdate(
+      doctorId,
+      updateData,
+      { new: true },
+    );
+
+    if (!updatedDoctor) {
+      return res.json({ success: false, message: "Doctor not found" });
+    }
+
+    res.json({ success: true, message: "Doctor Updated", doctor: updatedDoctor, previousClinicId });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }

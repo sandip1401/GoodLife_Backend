@@ -8,21 +8,21 @@ const createClinic = async (req, res) => {
     const { name, address, city, pincode, offer } = req.body;
     const imageFile = req.file;
 
-    if (!name || !address || !city || !pincode ||!offer) {
+    if (!name || !address || !city || !pincode || !offer) {
       return res.json({
         success: false,
-        message: "Missing clinic details"
+        message: "Missing clinic details",
       });
     }
 
     let existingClinic = await clinicModel.findOne({
-      name: { $regex: new RegExp("^" + name + "$", "i") }
+      name: { $regex: new RegExp("^" + name + "$", "i") },
     });
 
     if (existingClinic) {
       return res.json({
         success: false,
-        message: "Clinic already exists"
+        message: "Clinic already exists",
       });
     }
 
@@ -30,7 +30,7 @@ const createClinic = async (req, res) => {
 
     if (imageFile) {
       const upload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image"
+        resource_type: "image",
       });
       imageUrl = upload.secure_url;
     }
@@ -41,7 +41,7 @@ const createClinic = async (req, res) => {
       address,
       city,
       offer,
-      pincode
+      pincode,
     });
 
     await clinic.save();
@@ -49,37 +49,37 @@ const createClinic = async (req, res) => {
     res.json({
       success: true,
       message: "Clinic created successfully",
-      clinic
+      clinic,
     });
   } catch (error) {
     console.log(error);
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
-
-
 
 // SEARCH CLINIC (for admin search input)
 const searchClinic = async (req, res) => {
   try {
     const { name } = req.query;
 
-    const clinics = await clinicModel.find({
-      name: { $regex: name, $options: "i" }
-    }).limit(10);
+    const clinics = await clinicModel
+      .find({
+        name: { $regex: name, $options: "i" },
+      })
+      .limit(10);
 
     res.json({
       success: true,
-      clinics
+      clinics,
     });
   } catch (error) {
     console.log(error);
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -93,33 +93,114 @@ const getAllClinics = async (req, res) => {
           from: "doctors",
           localField: "_id",
           foreignField: "clinicId",
-          as: "doctorList"
-        }
+          as: "doctorList",
+        },
       },
       {
         $addFields: {
-          doctorCount: { $size: "$doctorList" }
-        }
+          doctorCount: { $size: "$doctorList" },
+        },
       },
       {
         $project: {
-          doctorList: 0
-        }
+          doctorList: 0,
+        },
       },
       {
-        $sort: { name: 1 }
-      }
+        $sort: { name: 1 },
+      },
     ]);
 
     res.json({
       success: true,
-      clinics
+      clinics,
     });
   } catch (error) {
     console.log(error);
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
+    });
+  }
+};
+
+// GET CLINIC BY ID (admin edit)
+const getClinicById = async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+    const clinic = await clinicModel.findById(clinicId);
+
+    if (!clinic) {
+      return res.json({
+        success: false,
+        message: "Clinic not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      clinic,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// UPDATE CLINIC (admin)
+const updateClinic = async (req, res) => {
+  try {
+    const { clinicId } = req.params;
+    const { name, address, city, pincode, offer } = req.body;
+    const imageFile = req.file;
+
+    if (!name || !address || !city || !pincode || !offer) {
+      return res.json({
+        success: false,
+        message: "Missing clinic details",
+      });
+    }
+
+    const clinic = await clinicModel.findById(clinicId);
+
+    if (!clinic) {
+      return res.json({
+        success: false,
+        message: "Clinic not found",
+      });
+    }
+
+    let imageUrl = clinic.image;
+
+    if (imageFile) {
+      const upload = await cloudinary.uploader.upload(imageFile.path, {
+        resource_type: "image",
+      });
+      imageUrl = upload.secure_url;
+    }
+
+    clinic.name = name;
+    clinic.address = address;
+    clinic.city = city;
+    clinic.pincode = pincode;
+    clinic.offer = offer;
+    clinic.image = imageUrl;
+
+    await clinic.save();
+
+    res.json({
+      success: true,
+      message: "Clinic updated successfully",
+      clinic,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
     });
   }
 };
@@ -129,21 +210,19 @@ const getDoctorsByClinic = async (req, res) => {
   try {
     const { clinicId } = req.params;
 
-    const doctors = await doctorModel
-      .find({ clinicId })
-      .select("-password");
+    const doctors = await doctorModel.find({ clinicId }).select("-password");
 
     res.json({
       success: true,
-      doctors
+      doctors,
     });
   } catch (error) {
     console.log(error);
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-export { searchClinic, getAllClinics, getDoctorsByClinic, createClinic };
+export { searchClinic, getAllClinics, getDoctorsByClinic, createClinic, getClinicById, updateClinic };
