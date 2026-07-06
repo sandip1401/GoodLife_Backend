@@ -55,10 +55,10 @@ const generateDoctorSlots = (doctor, year, month) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { name, password, phone, gender, age } = req.body;
+    const { name, email, password, phone, gender, age } = req.body;
 
     // 🔹 Validation
-    if (!name || !password || !phone || !gender || !age) {
+    if (!name || !email || !password || !phone || !gender || !age) {
       return res.json({
         success: false,
         message: "All required fields must be filled",
@@ -72,11 +72,11 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await userModel.findOne({ phone });
+    const existingUser = await userModel.findOne({ $or: [{ phone }, { email }] });
     if (existingUser) {
       return res.json({
         success: false,
-        message: "User already exists",
+        message: "User with this phone or email already exists",
       });
     }
 
@@ -85,6 +85,7 @@ const registerUser = async (req, res) => {
 
     const user = await userModel.create({
       name,
+      email,
       password: hashedPassword,
       phone,
       gender,
@@ -533,6 +534,61 @@ const verifyPayment = async (req, res) => {
   }
 };
 
+const resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.json({ success: false, message: "Email and new password are required" });
+    }
+    if (password.length < 8) {
+      return res.json({ success: false, message: "Password must be at least 8 characters" });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.json({ success: true, message: "Password reset successfully" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const getMaskedEmail = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      return res.json({ success: false, message: "Phone number is required" });
+    }
+    const user = await userModel.findOne({ phone });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    
+    const email = user.email;
+    if (!email) {
+      return res.json({ success: false, message: "No email associated with this account" });
+    }
+
+    const [local, domain] = email.split("@");
+    let maskedLocal = "";
+    if (local.length <= 3) {
+      maskedLocal = "*".repeat(local.length);
+    } else {
+      maskedLocal = "*".repeat(local.length - 3) + local.slice(-3);
+    }
+    const maskedEmail = maskedLocal + "@" + domain;
+
+    res.json({ success: true, maskedEmail, email });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   registerUser,
   loginUser,
@@ -547,4 +603,6 @@ export {
   addDonor,
   listDonors,
   updateDonorAvailability,
+  resetPassword,
+  getMaskedEmail,
 };

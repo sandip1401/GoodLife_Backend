@@ -1,5 +1,5 @@
 import express, { Router } from 'express'
-import { bookAppointment, cancelAppointment, createPaymentorder, getUserProfile, loginUser, myAppointments, registerUser, verifyPayment,reportDonor, addDonor, listDonors, updateDonorAvailability } from '../controllers/userController.js'
+import { bookAppointment, cancelAppointment, createPaymentorder, getUserProfile, loginUser, myAppointments, registerUser, verifyPayment,reportDonor, addDonor, listDonors, updateDonorAvailability, resetPassword, getMaskedEmail } from '../controllers/userController.js'
 import {authUser} from '../middlewares/authUser.js'
 
 
@@ -7,6 +7,8 @@ const userRouter=express.Router()
 
 userRouter.post('/register',registerUser)
 userRouter.post('/login',loginUser)
+userRouter.post('/reset-password',resetPassword)
+userRouter.post('/get-masked-email',getMaskedEmail)
 userRouter.post('/book-appointment',authUser,bookAppointment)
 userRouter.post('/cancel-appointment',authUser,cancelAppointment)
 userRouter.get("/my-appointments",authUser,myAppointments)
